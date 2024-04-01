@@ -63,7 +63,7 @@ Content-Length: 158
 6. Запрос для feed
 
 ```bash
-curl -i -X POST http://localhost:8080/feed \
+curl -i -X GET http://localhost:8080/feed \
 -H 'Content-Type: application/json' \
 -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTE5NjI1MjIsInN1YiI6IjEifQ.O7tIidPWmuGJ4rYJORXADaz34_FK1D51Xqfa5uE5qD4' \
 ```

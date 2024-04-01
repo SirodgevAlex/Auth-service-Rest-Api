@@ -30,9 +30,7 @@ var db *sql.DB
 var jwtKey = []byte("secret_key")
 
 func main() {
-	var err error
-	connStr := "user=postgres password=1234 dbname=db sslmode=disable"
-	db, err = sql.Open("postgres", connStr)
+	db, err := sql.Open("postgres", "postgres://postgres:1234@postgres:5432/bd?sslmode=disable")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -47,7 +45,7 @@ func main() {
 
 	router.HandleFunc("/register", register).Methods("POST")
 	router.HandleFunc("/authorize", authorize).Methods("POST")
-	router.HandleFunc("/feed", feed).Methods("POST")
+	router.HandleFunc("/feed", feed).Methods("GET")
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
@@ -157,7 +155,7 @@ func authorize(w http.ResponseWriter, r *http.Request) {
 	claims := &Claims{
 		user_id: user_id,
 		StandardClaims: jwt.StandardClaims{
-			Subject: strconv.Itoa(user_id),
+			Subject:   strconv.Itoa(user_id),
 			ExpiresAt: expirationTime.Unix(),
 		},
 	}
