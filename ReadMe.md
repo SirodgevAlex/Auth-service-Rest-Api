@@ -76,5 +76,5 @@ Date: Mon, 01 Apr 2024 02:53:56 GMT
 Content-Length: 2
 Content-Type: text/plain; charset=utf-8
 
-1
+{"user_id":1}
 ```
