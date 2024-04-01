@@ -204,5 +204,5 @@ func feed(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(user_id)
+	json.NewEncoder(w).Encode(map[string]int{"user_id": user_id})
 }
