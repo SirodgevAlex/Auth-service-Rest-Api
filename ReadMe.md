@@ -70,7 +70,7 @@ curl -i -X POST http://localhost:8080/feed \
 
 получим в ответ такой результат
 
-```
+```bash
 HTTP/1.1 201 Created
 Date: Mon, 01 Apr 2024 02:53:56 GMT
 Content-Length: 2
