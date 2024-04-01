@@ -47,7 +47,7 @@ func main() {
 
 	router.HandleFunc("/register", register).Methods("POST")
 	router.HandleFunc("/authorize", authorize).Methods("POST")
-	router.HandleFunc("/feed", access_token).Methods("POST")
+	router.HandleFunc("/feed", feed).Methods("POST")
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
@@ -92,7 +92,7 @@ func register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var count int
-	err = db.QueryRow("SELECT COUNT(*) FROM users WHERE email = $1", user.Email).Scan(&count)
+	err = db.QueryRow("SELECT COUNT(*) FROM users WHERE Email = $1", user.Email).Scan(&count)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -109,7 +109,7 @@ func register(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		query := "INSERT INTO users(email, password) VALUES($1, $2) RETURNING id"
+		query := "INSERT INTO users(Email, Password) VALUES($1, $2) RETURNING Id"
 		err = db.QueryRow(query, user.Email, hashedPassword).Scan(&user.Id)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -123,7 +123,7 @@ func register(w http.ResponseWriter, r *http.Request) {
 }
 
 type Claims struct {
-	Email string
+	user_id int
 	jwt.StandardClaims
 }
 
@@ -135,7 +135,7 @@ func authorize(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var hashedPassword string
-	err := db.QueryRow("SELECT password FROM users WHERE email = $1", user.Email).Scan(&hashedPassword)
+	err := db.QueryRow("SELECT Password FROM Users WHERE Email = $1", user.Email).Scan(&hashedPassword)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
@@ -147,7 +147,7 @@ func authorize(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var user_id int
-	err = db.QueryRow("SELECT Id FROM users WHERE email = $1", user.Email).Scan(&user_id)
+	err = db.QueryRow("SELECT Id FROM users WHERE Email = $1", user.Email).Scan(&user_id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
@@ -155,7 +155,7 @@ func authorize(w http.ResponseWriter, r *http.Request) {
 
 	expirationTime := time.Now().Add(5 * time.Minute)
 	claims := &Claims{
-		Email: user.Email,
+		user_id: user_id,
 		StandardClaims: jwt.StandardClaims{
 			Subject: strconv.Itoa(user_id),
 			ExpiresAt: expirationTime.Unix(),
@@ -195,7 +195,7 @@ func extractUserIdFromToken(r *http.Request) (int, error) {
 	return 0, errors.New("невозможно извлечь идентификатор пользователя из токена")
 }
 
-func access_token(w http.ResponseWriter, r *http.Request) {
+func feed(w http.ResponseWriter, r *http.Request) {
 	user_id, err := extractUserIdFromToken(r)
 	if err != nil {
 		http.Error(w, "Пользователь не авторизован", http.StatusUnauthorized)
