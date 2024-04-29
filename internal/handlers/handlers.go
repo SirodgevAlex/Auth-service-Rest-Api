@@ -17,7 +17,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = db.RegisterUser(user)
+	user.ID, err = db.RegisterUser(user)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

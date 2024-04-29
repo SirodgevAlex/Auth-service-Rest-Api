@@ -61,50 +61,50 @@ func WaitWhileDBNotReady() {
     }
 }
 
-func RegisterUser(user models.User) error {
+func RegisterUser(user models.User) (int, error) {
 	var count int
 	err := db.QueryRow("SELECT COUNT(*) FROM users WHERE Email = $1", user.Email).Scan(&count)
 	if err != nil {
-		return err
+		return 0, fmt.Errorf("ошибка при проверке существования пользователя: %v", err)
 	}
 	if count > 0 {
-		return errors.New("Email уже занят")
+		return 0, errors.New("Email уже занят")
 	}
 
 	if !auth.IsEmailValid(user.Email) || !auth.IsPasswordSafe(user.Password) {
-		return errors.New("Некорректный email или пароль")
+		return 0, errors.New("Некорректный email или пароль")
 	}
-
+	
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return err
+		return 0, fmt.Errorf("ошибка при генерации пароля: %v", err)
 	}
 
 	query := "INSERT INTO users(Email, Password) VALUES($1, $2) RETURNING Id"
-	err = db.QueryRow(query, user.Email, string(hashedPassword)).Scan(&user.Id)
+	err = db.QueryRow(query, user.Email, string(hashedPassword)).Scan(&user.ID)
 	if err != nil {
-		return err
+		return 0, fmt.Errorf("ошибка при регистрации пользователя: %v", err)
 	}
 
-	return nil
+	return user.ID, nil
 }
 
 func AuthorizeUser(user models.User) (string, error) {
 	var hashedPassword string
 	err := db.QueryRow("SELECT Password FROM Users WHERE Email = $1", user.Email).Scan(&hashedPassword)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("ошибка при поиске пользователя: %v", err)
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(user.Password))
 	if err != nil {
-		return "", err
+		return "", errors.New("неправильный пароль")
 	}
 
 	var userID int
 	err = db.QueryRow("SELECT Id FROM users WHERE Email = $1", user.Email).Scan(&userID)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("ошибка при получении ID пользователя: %v", err)
 	}
 
 	expirationTime := time.Now().Add(5 * time.Minute)
@@ -118,7 +118,7 @@ func AuthorizeUser(user models.User) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString(jwtKey)
 	if err != nil {
-		return "", errors.New("Ошибка генерации токена")
+		return "", fmt.Errorf("ошибка генерации токена: %v", err)
 	}
 
 	return tokenString, nil
